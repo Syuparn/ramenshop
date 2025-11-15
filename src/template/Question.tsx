@@ -17,6 +17,7 @@ export const Question = ({title, selections, backOnClick, nextOnClick}: {
               background={s.active ? "black" : "white"}
               color={s.active ? "white" : "black"}
               key={i}
+              marginBottom={3}
             >
               {s.key}
             </Button>
