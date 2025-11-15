@@ -2,7 +2,9 @@ import { assign, setup, type StateValueFrom } from "xstate";
 
 export type RamenContext = {
   size: "mini" | "small" | "medium" | "large" | null;
+  garlic: "no" | "small" | "medium" | "large";
   vegetable: "no" | "small" | "medium" | "large";
+  fat: "no" | "small" | "medium" | "large" | "extralarge";
 }
 
 type RamenAssignEventMap = {
@@ -21,13 +23,14 @@ export const ramenMachine = setup({
     events: RamenEvent;
     context: RamenContext;
   },
-  //actions: ramenAssignActions,
 }).createMachine({
   id: "ramen",
   initial: "size",
   context: {
     size: null,
+    garlic: "medium",
     vegetable: "medium",
+    fat: "medium",
   },
   states: {
     size: {
@@ -38,7 +41,22 @@ export const ramenMachine = setup({
           }),
         },
         next: {
+          target: "garlic",
+        },
+      },
+    },
+    garlic: {
+      on: {
+        garlic: {
+          actions: assign({
+            garlic: ({event} : {event: RamenAssignEventMap["garlic"]}) => event.value,
+          }),
+        },
+        next: {
           target: "vegetable",
+        },
+        back: {
+          target: "history",
         },
       },
     },
@@ -50,7 +68,25 @@ export const ramenMachine = setup({
           }),
         },
         next: {
+          target: "fat",
+        },
+        back: {
+          target: "history",
+        },
+      },
+    },
+    fat: {
+      on: {
+        fat: {
+          actions: assign({
+            fat: ({event} : {event: RamenAssignEventMap["fat"]}) => event.value,
+          }),
+        },
+        next: {
           target: "final",
+        },
+        back: {
+          target: "history",
         },
       },
     },
