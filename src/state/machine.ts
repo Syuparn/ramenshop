@@ -5,6 +5,8 @@ export type RamenContext = {
   garlic: "no" | "small" | "medium" | "large";
   vegetable: "no" | "small" | "medium" | "large";
   fat: "no" | "small" | "medium" | "large" | "extralarge";
+  // NOTE: RamenState cannot be used because of self type reference
+  histories: string[];
 }
 
 type RamenAssignEventMap = {
@@ -17,6 +19,16 @@ type RamenAssignEventMap = {
 type RamenAssignEvent = RamenAssignEventMap[keyof RamenAssignEventMap];
 
 export type RamenEvent = RamenAssignEvent | {type: "next"} | {type: "back"};
+
+export type RamenState = StateValueFrom<typeof ramenMachine>;
+
+// TODO: generate from ramenMachine
+const stateKeys = [
+  "size",
+  "garlic",
+  "vegetable",
+  "fat",
+];
 
 export const ramenMachine = setup({
   types: {} as {
@@ -31,6 +43,7 @@ export const ramenMachine = setup({
     garlic: "medium",
     vegetable: "medium",
     fat: "medium",
+    histories: [],
   },
   states: {
     size: {
@@ -42,6 +55,10 @@ export const ramenMachine = setup({
         },
         next: {
           target: "garlic",
+          // TODO: generate from function (somehow type does not match...)
+          actions: assign({
+            histories: ({context} : {context: RamenContext}) => [...context.histories, "size"],
+          }),
         },
       },
     },
@@ -54,6 +71,9 @@ export const ramenMachine = setup({
         },
         next: {
           target: "vegetable",
+          actions: assign({
+            histories: ({context} : {context: RamenContext}) => [...context.histories, "garlic"],
+          }),
         },
         back: {
           target: "history",
@@ -69,6 +89,9 @@ export const ramenMachine = setup({
         },
         next: {
           target: "fat",
+          actions: assign({
+            histories: ({context} : {context: RamenContext}) => [...context.histories, "vegetable"],
+          }),
         },
         back: {
           target: "history",
@@ -83,21 +106,34 @@ export const ramenMachine = setup({
           }),
         },
         next: {
-          target: "final",
+          target: "result",
+          actions: assign({
+            histories: ({context} : {context: RamenContext}) => [...context.histories, "fat"],
+          }),
         },
         back: {
           target: "history",
         },
       },
     },
-    final: {
-      type: "final",
+    result: {
+      // NOTE: do not use type: "final", otherwise back button does not work
+      on: {
+        back: {
+          target: "history",
+        },
+      },
     },
+    // HACK: use histories array to move back to previous state
     history: {
-      type: "history",
+      always: stateKeys.map(key => ({
+        target: key,
+        guard: ({context}: {context: RamenContext}) => context.histories[context.histories.length -1] === key
+      })),
+      exit: assign({
+        // remove the last (=latest) element
+        histories: ({context} : {context: RamenContext}) => context.histories.slice(0, -1),
+      }),
     },
   },
 });
-
-export type RamenState = StateValueFrom<typeof ramenMachine>;
-

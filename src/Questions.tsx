@@ -14,6 +14,9 @@ export const Questions = ({state, send} : {
     garlic: <Garlic state={state} send={send} />,
     vegetable: <Vegetable state={state} send={send}/>,
     fat: <Fat state={state} send={send}/>,
-    final: <Result state={state}/>,
+    result: <Result state={state} backOnClick={() => {send({type: "back"});}}/>,
+    // never be rendered
+    back: <></>,
+    history: <></>,
   }[state.value];
 };

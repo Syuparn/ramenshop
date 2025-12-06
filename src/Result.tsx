@@ -1,9 +1,10 @@
 import type { SnapshotFrom } from "xstate";
 import type { ramenMachine } from "./state/machine";
-import { Text } from "@chakra-ui/react";
+import { Button, Text } from "@chakra-ui/react";
 
-export const Result = ({state} : {
+export const Result = ({state, backOnClick} : {
   state: SnapshotFrom<typeof ramenMachine>,
+  backOnClick: () => void,
 }) => {
   // NOTE: null must not be assigned
   const size = {mini: "ミニ", small: "小", medium: "中", large: "大"}[state.context.size ?? "small"];
@@ -12,8 +13,15 @@ export const Result = ({state} : {
   const fat = {no: "アブラ抜き", small: "アブラ少なめ", medium: "", large: "アブラマシ", extralarge: "アブラマシマシ"}[state.context.fat];
 
   return (
-    <Text>
-      ラーメン{size}{garlic}{vegetable}{fat}
-    </Text>
+    <>
+      <Text>
+        ご注文：<br/>ラーメン{size}{garlic}{vegetable}{fat}
+      </Text>
+      <Button
+        onClick={backOnClick}
+      >
+        Back
+      </Button>
+    </>
   )
 };
