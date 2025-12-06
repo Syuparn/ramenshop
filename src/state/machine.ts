@@ -53,13 +53,25 @@ export const ramenMachine = setup({
             size: ({event} : {event: RamenAssignEventMap["size"]}) => event.value,
           }),
         },
-        next: {
-          target: "garlic",
-          // TODO: generate from function (somehow type does not match...)
-          actions: assign({
-            histories: ({context} : {context: RamenContext}) => [...context.histories, "size"],
-          }),
-        },
+        next: [
+          // mini ramen does not have garlic option
+          {
+            target: "vegetable",
+            guard: ({context} : {context: RamenContext}) => context.size === "mini",
+            // TODO: generate from function (somehow type does not match...)
+            actions: assign({
+              histories: ({context} : {context: RamenContext}) => [...context.histories, "size"],
+            }),
+          },
+          // default
+          {
+            target: "garlic",
+            // TODO: generate from function (somehow type does not match...)
+            actions: assign({
+              histories: ({context} : {context: RamenContext}) => [...context.histories, "size"],
+            }),
+          },
+        ],
       },
     },
     garlic: {
