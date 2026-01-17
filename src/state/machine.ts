@@ -30,6 +30,18 @@ const stateKeys = [
   "fat",
 ];
 
+const assignObj = (key: keyof RamenAssignEventMap) => {
+  return {
+    [key]: ({event} : {event: RamenAssignEventMap[typeof key]}) => event.value,
+  } as const;
+};
+
+const historiesObj = (key: keyof RamenAssignEventMap) => {
+  return {
+    histories: ({context} : {context: RamenContext}) => [...context.histories, key],
+  } as const;
+};
+
 export const ramenMachine = setup({
   types: {} as {
     events: RamenEvent;
@@ -49,27 +61,19 @@ export const ramenMachine = setup({
     size: {
       on: {
         size: {
-          actions: assign({
-            size: ({event} : {event: RamenAssignEventMap["size"]}) => event.value,
-          }),
+          actions: assign(assignObj("size")),
         },
         next: [
           // mini ramen does not have garlic option
           {
             target: "vegetable",
             guard: ({context} : {context: RamenContext}) => context.size === "mini",
-            // TODO: generate from function (somehow type does not match...)
-            actions: assign({
-              histories: ({context} : {context: RamenContext}) => [...context.histories, "size"],
-            }),
+            actions: assign(historiesObj("size")),
           },
           // default
           {
             target: "garlic",
-            // TODO: generate from function (somehow type does not match...)
-            actions: assign({
-              histories: ({context} : {context: RamenContext}) => [...context.histories, "size"],
-            }),
+            actions: assign(historiesObj("size")),
           },
         ],
       },
@@ -77,15 +81,11 @@ export const ramenMachine = setup({
     garlic: {
       on: {
         garlic: {
-          actions: assign({
-            garlic: ({event} : {event: RamenAssignEventMap["garlic"]}) => event.value,
-          }),
+          actions: assign(assignObj("garlic")),
         },
         next: {
           target: "vegetable",
-          actions: assign({
-            histories: ({context} : {context: RamenContext}) => [...context.histories, "garlic"],
-          }),
+          actions: assign(historiesObj("garlic")),
         },
         back: {
           target: "history",
@@ -95,15 +95,11 @@ export const ramenMachine = setup({
     vegetable: {
       on: {
         vegetable: {
-          actions: assign({
-            vegetable: ({event} : {event: RamenAssignEventMap["vegetable"]}) => event.value,
-          }),
+          actions: assign(assignObj("vegetable")),
         },
         next: {
           target: "fat",
-          actions: assign({
-            histories: ({context} : {context: RamenContext}) => [...context.histories, "vegetable"],
-          }),
+          actions: assign(historiesObj("vegetable")),
         },
         back: {
           target: "history",
@@ -113,15 +109,11 @@ export const ramenMachine = setup({
     fat: {
       on: {
         fat: {
-          actions: assign({
-            fat: ({event} : {event: RamenAssignEventMap["fat"]}) => event.value,
-          }),
+          actions: assign(assignObj("fat")),
         },
         next: {
           target: "result",
-          actions: assign({
-            histories: ({context} : {context: RamenContext}) => [...context.histories, "fat"],
-          }),
+          actions: assign(historiesObj("fat")),
         },
         back: {
           target: "history",
