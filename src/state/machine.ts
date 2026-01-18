@@ -38,6 +38,7 @@ const actionObj = <Key extends (keyof RamenContext)>({questionKey, nextQuestionK
 }) => {
   const nextActions = nextConditions.map(cond => ({
     ...cond,
+    // NOTE: generic parameters of assign cannot be inferred here, so specify them explicitly
     actions: assign<RamenContext, {type: "next"}, undefined, RamenEvent, never>({
       histories: ({context} : {context: RamenContext}) => [...context.histories, questionKey],
     }),
