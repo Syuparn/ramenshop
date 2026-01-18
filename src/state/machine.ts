@@ -30,17 +30,40 @@ const stateKeys = [
   "fat",
 ];
 
-const assignObj = (key: keyof RamenAssignEventMap) => {
-  return {
-    [key]: ({event} : {event: RamenAssignEventMap[typeof key]}) => event.value,
-  } as const;
-};
+const actionObj = <Key extends (keyof RamenContext)>({questionKey, nextQuestionKey, nextConditions, hasBack}: {
+  questionKey: Key;
+  nextQuestionKey: keyof RamenContext | "result";
+  nextConditions: {target: keyof RamenContext, guard: ({context} : {context: RamenContext}) => boolean}[];
+  hasBack: boolean;
+}) => {
+  const nextActions = nextConditions.map(cond => ({
+    ...cond,
+    actions: assign<RamenContext, {type: "next"}, undefined, RamenEvent, never>({
+      histories: ({context} : {context: RamenContext}) => [...context.histories, questionKey],
+    }),
+  }));
 
-const historiesObj = (key: keyof RamenAssignEventMap) => {
   return {
-    histories: ({context} : {context: RamenContext}) => [...context.histories, key],
-  } as const;
-};
+    [questionKey]: {
+      actions: assign<RamenContext, RamenAssignEventMap[Key], undefined, RamenEvent, never>({
+        [questionKey]: ({event}: {event: RamenAssignEvent}) => event.value,
+      }),
+    },
+    next: [
+      ...nextActions,
+      // default
+      {
+        target: nextQuestionKey,
+        actions: assign<RamenContext, {type: "next"}, undefined, RamenEvent, never>({
+          histories: ({context} : {context: RamenContext}) => [...context.histories, questionKey],
+        }),
+      },
+    ],
+    back: hasBack ? {
+      target: "history",
+    } : undefined,
+  };
+}
 
 export const ramenMachine = setup({
   types: {} as {
@@ -59,66 +82,42 @@ export const ramenMachine = setup({
   },
   states: {
     size: {
-      on: {
-        size: {
-          actions: assign(assignObj("size")),
-        },
-        next: [
+      on: actionObj<"size">({
+        questionKey: "size",
+        nextQuestionKey: "garlic",
+        nextConditions: [
           // mini ramen does not have garlic option
           {
             target: "vegetable",
             guard: ({context} : {context: RamenContext}) => context.size === "mini",
-            actions: assign(historiesObj("size")),
-          },
-          // default
-          {
-            target: "garlic",
-            actions: assign(historiesObj("size")),
           },
         ],
-      },
+        hasBack: false,
+      }),
     },
     garlic: {
-      on: {
-        garlic: {
-          actions: assign(assignObj("garlic")),
-        },
-        next: {
-          target: "vegetable",
-          actions: assign(historiesObj("garlic")),
-        },
-        back: {
-          target: "history",
-        },
-      },
+      on: actionObj<"garlic">({
+        questionKey: "garlic",
+        nextQuestionKey: "vegetable",
+        nextConditions: [],
+        hasBack: true,
+      }),
     },
     vegetable: {
-      on: {
-        vegetable: {
-          actions: assign(assignObj("vegetable")),
-        },
-        next: {
-          target: "fat",
-          actions: assign(historiesObj("vegetable")),
-        },
-        back: {
-          target: "history",
-        },
-      },
+      on: actionObj<"vegetable">({
+        questionKey: "vegetable",
+        nextQuestionKey: "fat",
+        nextConditions: [],
+        hasBack: true,
+      }),
     },
     fat: {
-      on: {
-        fat: {
-          actions: assign(assignObj("fat")),
-        },
-        next: {
-          target: "result",
-          actions: assign(historiesObj("fat")),
-        },
-        back: {
-          target: "history",
-        },
-      },
+      on: actionObj<"fat">({
+        questionKey: "fat",
+        nextQuestionKey: "result",
+        nextConditions: [],
+        hasBack: true,
+      }),
     },
     result: {
       // NOTE: do not use type: "final", otherwise back button does not work
